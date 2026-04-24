@@ -1,0 +1,24 @@
+{
+  "name": "BG-BOT Trading Engine",
+  "short_name": "BG-BOT",
+  "description": "Dual Timeframe Trading Bot for Bitget",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0e17",
+  "theme_color": "#0a0e17",
+  "categories": ["finance", "utilities"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='32' fill='%230a0e17'/><rect x='4' y='4' width='184' height='184' rx='28' fill='none' stroke='%2300d4aa' stroke-width='3'/><text x='96' y='125' text-anchor='middle' font-family='monospace' font-size='90' font-weight='bold' fill='%2300d4aa'>B</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='80' fill='%230a0e17'/><rect x='10' y='10' width='492' height='492' rx='72' fill='none' stroke='%2300d4aa' stroke-width='5'/><text x='256' y='330' text-anchor='middle' font-family='monospace' font-size='240' font-weight='bold' fill='%2300d4aa'>B</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
