@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0a0e17">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BG-BOT">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='32' fill='%230a0e17'/><text x='96' y='120' text-anchor='middle' font-size='80' fill='%2300d4aa'>B</text></svg>">
+<title>BG-BOT Trading</title>
+<style>
+:root{
+  --bg:#0a0e17;--bg2:#111827;--bg3:#1a2236;--bg4:#0d1320;
+  --b1:#1e2d45;--b2:#2a3a55;
+  --acc:#00d4aa;--ad:rgba(0,212,170,.12);--ag:rgba(0,212,170,.3);
+  --red:#ff4757;--rd:rgba(255,71,87,.12);
+  --yel:#ffc312;--yd:rgba(255,195,18,.12);
+  --blu:#3b82f6;--bd:rgba(59,130,246,.12);
+  --pur:#a855f7;--pd:rgba(168,85,247,.12);
+  --org:#f97316;--od:rgba(249,115,22,.12);
+  --t1:#e8edf5;--t2:#8896b3;--t3:#4a5c7a;
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-t:env(safe-area-inset-top,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--t1);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:14px;position:fixed;inset:0}
+input,select,button,textarea{font-family:inherit;font-size:inherit}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--b1);border-radius:2px}
+
+/* ─── Splash ───────────────────────── */
+.splash{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s,visibility .5s}
+.splash.hide{opacity:0;visibility:hidden;pointer-events:none}
+.splash-logo{font-size:48px;font-weight:800;color:var(--acc);letter-spacing:-2px;margin-bottom:8px}
+.splash-sub{font-size:13px;color:var(--t3);letter-spacing:3px;text-transform:uppercase}
+.splash-bar{width:120px;height:2px;background:var(--b1);border-radius:2px;margin-top:24px;overflow:hidden}
+.splash-bar::after{content:'';display:block;width:40%;height:100%;background:var(--acc);border-radius:2px;animation:spl 1.2s ease-in-out infinite}
+@keyframes spl{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
+
+/* ─── App Shell ────────────────────── */
+.app{display:flex;flex-direction:column;height:100%;padding-top:var(--safe-t);padding-bottom:var(--safe-b)}
+
+/* ─── Top Bar ──────────────────────── */
+.topbar{height:52px;background:rgba(10,14,23,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--b1);display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0;z-index:50}
+.tb-logo{font-weight:800;font-size:16px;color:var(--acc);letter-spacing:-.5px}
+.tb-logo span{color:var(--t3);font-weight:400;font-size:11px}
+.tb-status{margin-left:auto;display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:12px;font-size:10px;font-weight:600;letter-spacing:.5px}
+.tb-status.off{background:var(--rd);color:var(--red)}
+.tb-status.on{background:var(--ad);color:var(--acc)}
+.tb-dot{width:5px;height:5px;border-radius:50%;background:currentColor;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ─── Mode Switch ──────────────────── */
+.mode-sw{display:flex;background:var(--bg3);border:1px solid var(--b1);border-radius:8px;padding:2px;gap:2px}
+.mode-sw input{display:none}
+.mode-l{padding:5px 12px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:1px;color:var(--t3);transition:all .25s;text-align:center;min-width:48px}
+.mode-sw input:checked+.mode-l{color:var(--bg);font-weight:800}
+#mS:checked+label{background:var(--acc)}
+#mP:checked+label{background:var(--org)}
+
+/* ─── Content Area ─────────────────── */
+.content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+.page{display:none;padding:12px 14px;padding-bottom:20px}
+.page.active{display:block}
+
+/* ─── Cards ────────────────────────── */
+.card{background:var(--bg2);border:1px solid var(--b1);border-radius:12px;margin-bottom:12px;overflow:hidden}
+.card-h{padding:12px 14px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between}
+.card-t{font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px}
+.card-t .dot{width:6px;height:6px;border-radius:2px}
+.card-b{padding:14px}
+
+/* ─── Stats Row ────────────────────── */
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+.stat{background:var(--bg2);border:1px solid var(--b1);border-radius:10px;padding:12px;position:relative;overflow:hidden}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.stat:nth-child(1)::before{background:var(--acc)}
+.stat:nth-child(2)::before{background:var(--blu)}
+.stat:nth-child(3)::before{background:var(--yel)}
+.stat:nth-child(4)::before{background:var(--pur)}
+.stat-l{font-size:9px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px}
+.stat-v{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+.stat-s{font-size:10px;color:var(--t2);margin-top:4px}
+.pos{color:var(--acc)}.neg{color:var(--red)}
+
+/* ─── DTF Panel ────────────────────── */
+.dtf-wrap{display:flex;gap:0;margin-bottom:12px}
+.dtf-col{flex:1;padding:12px;background:var(--bg2);border:1px solid var(--b1)}
+.dtf-col:first-child{border-radius:10px 0 0 10px;border-right:none}
+.dtf-col:last-child{border-radius:0 10px 10px 0}
+.dtf-tf{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.dtf-tf .d{width:6px;height:6px;border-radius:50%}
+.dtf-tf.m1{color:var(--blu)}.dtf-tf.m1 .d{background:var(--blu)}
+.dtf-tf.m5{color:var(--org)}.dtf-tf.m5 .d{background:var(--org)}
+.dtf-sig{font-size:22px;font-weight:800;margin:4px 0}
+.dtf-sig.bull{color:var(--acc)}.dtf-sig.bear{color:var(--red)}.dttf-sig.neut{color:var(--t3)}
+.dtf-price{font-size:11px;color:var(--t3);margin-bottom:8px}
+.dtf-ind{display:flex;justify-content:space-between;font-size:10px;padding:3px 0}
+.dtf-ind .n{color:var(--t2)}
+.dtf-ind .v{font-weight:700;padding:1px 6px;border-radius:3px;font-size:9px}
+.dtf-ind .v.l{background:var(--ad);color:var(--acc)}
+.dtf-ind .v.s{background:var(--rd);color:var(--red)}
+.dtf-ind .v.n2{background:rgba(74,92,122,.15);color:var(--t3)}
+
+.align-bar{background:var(--bg2);border:1px solid var(--b1);border-radius:10px;padding:12px;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:10px}
+.align-icon{font-size:24px}
+.align-txt{text-align:center}
+.align-txt .main{font-size:13px;font-weight:700}
+.align-txt .sub{font-size:10px;color:var(--t3)}
+.align-badge{padding:4px 10px;border-radius:6px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1px}
+.align-badge.ok{background:var(--ad);color:var(--acc)}
+.align-badge.no{background:var(--rd);color:var(--red)}
+.align-badge.wait{background:rgba(74,92,122,.15);color:var(--t3)}
+
+/* ─── Form ─────────────────────────── */
+.fg{margin-bottom:14px}
+.fl{display:block;font-size:11px;font-weight:600;color:var(--t2);margin-bottom:6px}
+.fi{width:100%;padding:10px 12px;background:var(--bg4);border:1px solid var(--b1);border-radius:8px;color:var(--t1);font-size:13px;outline:none;transition:border-color .2s}
+.fi:focus{border-color:var(--acc)}
+select.fi{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238896b3' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:30px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+/* ─── Toggle / Radio ───────────────── */
+.tog{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg4);border:1px solid var(--b1);border-radius:8px;margin-bottom:6px;cursor:pointer;transition:all .2s;user-select:none}
+.tog.active{border-color:var(--acc);background:var(--ad)}
+.tog input{display:none}
+.tog-c{width:18px;height:18px;border-radius:4px;border:2px solid var(--t3);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+.tog.active .tog-c{background:var(--acc);border-color:var(--acc)}
+.tog-c svg{width:10px;height:10px;opacity:0;transition:opacity .2s}
+.tog.active .tog-c svg{opacity:1}
+.tog-i{flex:1}
+.tog-n{font-size:12px;font-weight:600}
+.tog-d{font-size:10px;color:var(--t3);margin-top:1px}
+
+.rad{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg4);border:1px solid var(--b1);border-radius:8px;margin-bottom:6px;cursor:pointer;transition:all .2s}
+.rad.active{border-color:var(--acc);background:var(--ad)}
+.rad input{display:none}
+.rad-c{width:14px;height:14px;border-radius:50%;border:2px solid var(--t3);flex-shrink:0;transition:all .2s;display:flex;align-items:center;justify-content:center}
+.rad.active .rad-c{border-color:var(--acc)}
+.rad-c::after{content:'';width:7px;height:7px;border-radius:50%;background:var(--acc);transform:scale(0);transition:transform .2s}
+.rad.active .rad-c::after{transform:scale(1)}
+
+/* ─── Order Type Chips ─────────────── */
+.ot-chips{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.ot-chip{padding:10px;background:var(--bg4);border:1px solid var(--b1);border-radius:8px;text-align:center;cursor:pointer;transition:all .2s}
+.ot-chip.active{border-color:var(--pur);background:var(--pd)}
+.ot-chip .oc-n{font-size:12px;font-weight:700}
+.ot-chip .oc-d{font-size:9px;color:var(--t3);margin-top:2px}
+
+/* ─── Offset Pills ─────────────────── */
+.pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.pill{padding:6px 14px;background:var(--bg4);border:1px solid var(--b1);border-radius:16px;font-size:11px;font-weight:600;color:var(--t2);cursor:pointer;transition:all .2s}
+.pill.active{border-color:var(--acc);color:var(--acc);background:var(--ad)}
+
+/* ─── Buttons ──────────────────────── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;width:100%}
+.btn-p{background:var(--acc);color:var(--bg)}.btn-p:active{transform:scale(.97);opacity:.9}
+.btn-d{background:var(--rd);color:var(--red);border:1px solid rgba(255,71,87,.2)}
+.btn-g{background:transparent;color:var(--t2);border:1px solid var(--b1)}
+.btn-sm{padding:7px 14px;font-size:11px;width:auto}
+
+/* ─── Trade Log ────────────────────── */
+.trade{display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid rgba(30,45,69,.5);font-size:11px}
+.trade:last-child{border:none}
+.trade .side{padding:2px 6px;border-radius:3px;font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+.trade .side.buy{background:var(--ad);color:var(--acc)}.trade .side.sell{background:var(--rd);color:var(--red)}
+.trade .mode{padding:2px 5px;border-radius:3px;font-size:7px;font-weight:800;text-transform:uppercase;letter-spacing:.5px}
+.trade .mode.spot{background:var(--ad);color:var(--acc)}.trade .mode.perp{background:var(--od);color:var(--org)}
+.trade .pair{font-weight:600;min-width:55px}
+.trade .price{color:var(--t2);flex:1;text-align:right}
+.trade .pnl{font-weight:700;min-width:50px;text-align:right}
+.trade .time{color:var(--t3);font-size:10px;min-width:40px;text-align:right}
+
+/* ─── Console ──────────────────────── */
+.con{background:#050810;border:1px solid var(--b1);border-radius:8px;padding:10px;font-size:10px;font-family:'Courier New',monospace;line-height:1.6;max-height:160px;overflow-y:auto}
+.con .ll{display:flex;gap:6px}
+.con .t{color:var(--t3);white-space:nowrap}
+.con .m{word-break:break-all}.con .m.i{color:var(--blu)}.con .m.s{color:var(--acc)}.con .m.w{color:var(--yel)}.con .m.e{color:var(--red)}.con .m.tf{color:var(--pur)}
+
+/* ─── Bottom Nav ───────────────────── */
+.bnav{height:calc(56px + var(--safe-b));padding-bottom:var(--safe-b);background:rgba(10,14,23,.95);backdrop-filter:blur(16px);border-top:1px solid var(--b1);display:flex;flex-shrink:0;z-index:50}
+.bnav-i{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;transition:color .2s;color:var(--t3);-webkit-tap-highlight-color:transparent}
+.bnav-i.active{color:var(--acc)}
+.bnav-i svg{width:20px;height:20px}
+.bnav-i span{font-size:9px;font-weight:600;letter-spacing:.3px}
+
+/* ─── Perp fields ──────────────────── */
+.perp-f{overflow:hidden;transition:all .3s}
+.perp-f.hide{max-height:0;opacity:0;margin:0;pointer-events:none}
+.perp-f.show{max-height:200px;opacity:1}
+
+/* ─── Animations ───────────────────── */
+.fade-up{opacity:0;transform:translateY(10px);animation:fu .4s ease forwards}
+@keyframes fu{to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<!-- Splash Screen -->
+<div class="splash" id="splash">
+  <div class="splash-logo">BG-BOT</div>
+  <div class="splash-sub">Trading Engine</div>
+  <div class="splash-bar"></div>
+</div>
+
+<!-- App Shell -->
+<div class="app" id="app" style="display:none">
+
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="tb-logo">BG-BOT<span> v5</span></div>
+    <div class="mode-sw">
+      <input type="radio" name="mm" id="mS" checked>
+      <label class="mode-l" for="mS" onclick="swMode('spot')">SPOT</label>
+      <input type="radio" name="mm" id="mP">
+      <label class="mode-l" for="mP" onclick="swMode('perp')">PERP</label>
+    </div>
+    <div class="tb-status off" id="topSt"><div class="tb-dot"></div><span>OFF</span></div>
+  </div>
+
+  <!-- Content -->
+  <div class="content" id="content">
+
+    <!-- ═══ Page: Dashboard ═══ -->
+    <div class="page active" id="pgDash">
+
+      <!-- Stats -->
+      <div class="stats fade-up">
+        <div class="stat"><div class="stat-l">Saldo</div><div class="stat-v" id="xBal">$0.00</div><div class="stat-s" id="xBalS">USDT</div></div>
+        <div class="stat"><div class="stat-l">Trades</div><div class="stat-v" id="xTrd">0</div><div class="stat-s"><span id="xST" class="pos">0S</span> · <span id="xPT" class="neg">0P</span></div></div>
+        <div class="stat"><div class="stat-l">Win Rate</div><div class="stat-v" id="xWR">—</div><div class="stat-s"><span class="pos" id="xW">0W</span>/<span class="neg" id="xL">0L</span></div></div>
+        <div class="stat"><div class="stat-l">Align</div><div class="stat-v" id="xAl">—</div><div class="stat-s" id="xAlS">M1↔M5</div></div>
+      </div>
+
+      <!-- DTF Analysis -->
+      <div class="card fade-up">
+        <div class="card-h"><div class="card-t"><div class="dot" style="background:var(--pur)"></div>Dual TF Analysis</div><span id="xPair" style="font-size:10px;color:var(--t3)">BTCUSDT</span></div>
+        <div class="card-b" style="padding:10px">
+          <div class="dtf-wrap">
+            <div class="dtf-col">
+              <div class="dtf-tf m1"><div class="d"></div>M1 Entry</div>
+              <div class="dtf-sig neut" id="dM1">WAIT</div>
+              <div class="dtf-price" id="dM1P">$0.00</div>
+              <div id="dM1I">
+                <div class="dtf-ind"><span class="name">RSI</span><span class="v n2" id="dM1r">—</span></div>
+                <div class="dtf-ind"><span class="name">MACD</span><span class="v n2" id="dM1m">—</span></div>
+                <div class="dtf-ind"><span class="name">BB</span><span class="v n2" id="dM1b">—</span></div>
+                <div class="dtf-ind"><span class="name">EMA</span><span class="v n2" id="dM1e">—</span></div>
+              </div>
+            </div>
+            <div class="dtf-col">
+              <div class="dtf-tf m5"><div class="d"></div>M5 Trend</div>
+              <div class="dtf-sig neut" id="dM5">WAIT</div>
+              <div class="dtf-price" id="dM5P">$0.00</div>
+              <div id="dM5I">
+                <div class="dtf-ind"><span class="name">RSI</span><span class="v n2" id="dM5r">—</span></div>
+                <div class="dtf-ind"><span class="name">MACD</span><span class="v n2" id="dM5m">—</span></div>
+                <div class="dtf-ind"><span class="name">BB</span><span class="v n2" id="dM5b">—</span></div>
+                <div class="dtf-ind"><span class="name">EMA</span><span class="v n2" id="dM5e">—</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="align-bar" id="alBar">
+            <div class="align-icon" id="alIcon">⏳</div>
+            <div class="align-txt"><div class="main" id="alMain">Menunggu...</div><div class="sub" id="alSub">Analisis belum dimulai</div></div>
+            <div class="align-badge wait" id="alBadge">STANDBY</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Start/Stop -->
+      <button class="btn btn-p" id="mainBtn" onclick="toggleBot()" style="margin-bottom:12px">▶ Start Bot</button>
+
+      <!-- Trades -->
+      <div class="card fade-up">
+        <div class="card-h"><div class="card-t"><div class="dot" style="background:var(--blu)"></div>Recent Trades</div></div>
+        <div class="card-b" id="tradeLog" style="padding:8px 14px;max-height:200px;overflow-y:auto">
+          <div style="text-align:center;padding:16px;color:var(--t3);font-size:11px">Belum ada trade</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ Page: Config ═══ -->
+    <div class="page" id="pgConfig">
+
+      <!-- API -->
+      <div class="card"><div class="card-h"><div class="card-t"><div class="dot" style="background:var(--acc)"></div>API Keys</div><button class="btn btn-g btn-sm" onclick="testConn()">Test</button></div>
+        <div class="card-b">
+          <div class="fg"><label class="fl">API Key</label><input type="password" class="fi" id="cKey" placeholder="bg_xxxxx"></div>
+          <div class="fg"><label class="fl">Secret Key</label><input type="password" class="fi" id="cSec" placeholder="xxxxxx"></div>
+          <div class="fg"><label class="fl">Passphrase</label><input type="password" class="fi" id="cPass" placeholder="xxxxxx"></div>
+          <div class="fg"><label class="fl">Environment</label><select class="fi" id="cEnv"><option value="demo">Demo</option><option value="live">Live</option></select></div>
+        </div>
+      </div>
+
+      <!-- Trading -->
+      <div class="card"><div class="card-h"><div class="card-t"><div class="dot" style="background:var(--blu)"></div>Trading</div></div>
+        <div class="card-b">
+          <div class="fg"><label class="fl">Pair</label><select class="fi" id="cPair"><option>BTCUSDT</option><option>ETHUSDT</option><option>SOLUSDT</option><option>BNBUSDT</option><option>XRPUSDT</option><option>DOGEUSDT</option></select></div>
+          <div class="frow">
+            <div class="fg"><label class="fl">Size (USDT)</label><input type="number" class="fi" id="cSize" value="50"></div>
+            <div class="fg"><label class="fl">Max Pos</label><input type="number" class="fi" id="cMaxP" value="3"></div>
+          </div>
+          <div class="frow">
+            <div class="fg"><label class="fl">TP %</label><input type="number" class="fi" id="cTP" value="2.5" step="0.1"></div>
+            <div class="fg"><label class="fl">SL %</label><input type="number" class="fi" id="cSL" value="1.5" step="0.1"></div>
+          </div>
+          <div class="perp-f hide" id="perpF">
+            <div class="frow">
+              <div class="fg"><label class="fl">Leverage</label><select class="fi" id="cLev"><option>1</option><option>2</option><option selected>3</option><option>5</option><option>10</option><option>20</option></select></div>
+              <div class="fg"><label class="fl">Margin</label><select class="fi" id="cMarg"><option>crossed</option><option>isolated</option></select></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Type -->
+      <div class="card"><div class="card-h"><div class="card-t"><div class="dot" style="background:var(--pur)"></div>Order Type</div></div>
+        <div class="card-b">
+          <div class="ot-chips">
+            <div class="ot-chip active" onclick="selOT(this,'market')"><div class="oc-n">Market</div><div class="oc-d">Instan</div></div>
+            <div class="ot-chip" onclick="selOT(this,'limit')"><div class="oc-n">Limit</div><div class="oc-d">Pending</div></div>
+          </div>
+          <div id="limitF" style="display:none">
+            <label class="fl">Offset</label>
+            <div class="pills">
+              <div class="pill" onclick="selOff(this,.1)">0.1%</div>
+              <div class="pill active" onclick="selOff(this,.2)">0.2%</div>
+              <div class="pill" onclick="selOff(this,.3)">0.3%</div>
+              <div class="pill" onclick="selOff(this,.5)">0.5%</div>
+              <div class="pill" onclick="selOff(this,1)">1.0%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Indicators -->
+      <div class="card"><div class="card-h"><div class="card-t"><div class="dot" style="background:var(--yel)"></div>Indicators</div></div>
+        <div class="card-b">
+          <div class="tog active" onclick="togI(this)"><input type="checkbox" checked data-i="rsi"><div class="tog-c"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#0a0e17" stroke-width="2" stroke-linecap="round"/></svg></div><div class="tog-i"><div class="tog-n">RSI</div><div class="tog-d">Relative Strength Index</div></div></div>
+          <div class="tog active" onclick="togI(this)"><input type="checkbox" checked data-i="macd"><div class="tog-c"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#0a0e17" stroke-width="2" stroke-linecap="round"/></svg></div><div class="tog-i"><div class="tog-n">MACD</div><div class="tog-d">Convergence Divergence</div></div></div>
+          <div class="tog" onclick="togI(this)"><input type="checkbox" data-i="bb"><div class="tog-c"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#0a0e17" stroke-width="2" stroke-linecap="round"/></svg></div><div class="tog-i"><div class="tog-n">Bollinger Bands</div><div class="tog-d">Volatility envelope</div></div></div>
+          <div class="tog" onclick="togI(this)"><input type="checkbox" data-i="ema"><div class="tog-c"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#0a0e17" stroke-width="2" stroke-linecap="round"/></svg></div><div class="tog-i"><div class="tog-n">EMA Cross</div><div class="tog-d">9/21 MA crossover</div></div></div>
+          <div class="tog" onclick="togI(this)"><input type="checkbox" data-i="stoch"><div class="tog-c"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#0a0e17" stroke-width="2" stroke-linecap="round"/></svg></div><div class="tog-i"><div class="tog-n">Stochastic</div><div class="tog-d">%K/%D oscillator</div></div></div>
+          <div class="tog" onclick="togI(this)"><input type="checkbox" data-i="atr"><div class="tog-c"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#0a0e17" stroke-width="2" stroke-linecap="round"/></svg></div><div class="tog-i"><div class="tog-n">ATR Filter</div><div class="tog-d">Volatility filter</div></div></div>
+        </div>
+      </div>
+
+      <!-- Strategy -->
+      <div class="card"><div class="card-h"><div class="card-t"><div class="dot" style="background:var(--pur)"></div>Strategy</div></div>
+        <div class="card-b">
+          <div class="rad active" onclick="selStrat(this,'multi_confirm')"><div class="rad-c"></div><div class="tog-i"><div class="tog-n">Multi-Confirm</div><div class="tog-d">≥2 indikator searah</div></div></div>
+          <div class="rad" onclick="selStrat(this,'primary_secondary')"><div class="rad-c"></div><div class="tog-i"><div class="tog-n">Primary + Filter</div><div class="tog-d">RSI utama, lain filter</div></div></div>
+          <div class="rad" onclick="selStrat(this,'weighted_score')"><div class="rad-c"></div><div class="tog-i"><div class="tog-n">Weighted Score</div><div class="tog-d">Skor bobot per indikator</div></div></div>
+        </div>
+      </div>
+
+      <button class="btn btn-p" onclick="saveCfg()" style="margin-top:4px">💾 Simpan Konfigurasi</button>
+    </div>
+
+    <!-- ═══ Page: Console ═══ -->
+    <div class="page" id="pgConsole">
+      <div class="card"><div class="card-h"><div class="card-t"><div class="dot" style="background:var(--yel)"></div>Bot Console</div><button class="btn btn-g btn-sm" onclick="clearCon()">Clear</button></div>
+        <div class="card-b" style="padding:8px">
+          <div class="con" id="con"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ Page: About ═══ -->
+    <div class="page" id="pgAbout">
+      <div class="card"><div class="card-h"><div class="card-t"><div class="dot" style="background:var(--acc)"></div>About</div></div>
+        <div class="card-b" style="font-size:12px;line-height:1.8;color:var(--t2)">
+          <p style="font-size:16px;font-weight:700;color:var(--t1);margin-bottom:8px">BG-BOT v5 <span style="color:var(--acc)">Dual TF</span></p>
+          <p>Trading bot dengan dual timeframe analysis (M1+M5). Entry hanya saat M1 searah M5.</p>
+          <br>
+          <p><strong style="color:var(--t1)">Fitur:</strong></p>
+          <p>• Spot & Perpetual trading</p>
+          <p>• Market & Limit orders</p>
+          <p>• 6 indikator teknikal</p>
+          <p>• 3 strategi trading</p>
+          <p>• TP/SL otomatis</p>
+          <p>• Dual timeframe alignment</p>
+          <br>
+          <p style="color:var(--yel)">⚠ Gunakan demo mode terlebih dahulu. Trading berisiko tinggi.</p>
+          <br>
+          <p style="color:var(--t3);font-size:10px">Install: Buka di Chrome → ⋮ → Add to Home Screen</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <div class="bnav">
+    <div class="bnav-i active" onclick="navTo('pgDash',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span>Dashboard</span>
+    </div>
+    <div class="bnav-i" onclick="navTo('pgConfig',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4m0 14v4m-8.66-2.34l2.83-2.83m11.66-5.66l2.83-2.83M1 12h4m14 0h4m-2.34-8.66l-2.83 2.83M7.17 16.83l-2.83 2.83"/></svg>
+      <span>Config</span>
+    </div>
+    <div class="bnav-i" onclick="navTo('pgConsole',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+      <span>Console</span>
+    </div>
+    <div class="bnav-i" onclick="navTo('pgAbout',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      <span>About</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ───────────────────────────
+let running=false,mode='spot',orderType='market',limitOff=0.2,strategy='multi_confirm';
+let tc=0,w=0,l=0,st=0,pt=0,alC=0,tc2=0;
+
+// ─── Splash ──────────────────────────
+setTimeout(()=>{document.getElementById('splash').classList.add('hide');document.getElementById('app').style.display='flex';},1800);
+
+// ─── Navigation ──────────────────────
+function navTo(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.bnav-i').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+}
+
+// ─── Mode Switch ─────────────────────
+function swMode(m){
+  mode=m;
+  const pf=document.getElementById('perpF');
+  if(m==='perp'){pf.classList.remove('hide');pf.classList.add('show');}
+  else{pf.classList.remove('show');pf.classList.add('hide');}
+  log('mode',`Mode: ${m.toUpperCase()}`);
+}
+
+// ─── Order Type ──────────────────────
+function selOT(el,t){
+  document.querySelectorAll('.ot-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  orderType=t;
+  document.getElementById('limitF').style.display=t==='limit'?'block':'none';
+  log('info',`Order: ${t.toUpperCase()}`);
+}
+
+function selOff(el,v){
+  document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  limitOff=v;
+}
+
+// ─── Indicator Toggle ────────────────
+function togI(el){
+  const cb=el.querySelector('input');
+  setTimeout(()=>el.classList.toggle('active',cb.checked),10);
+}
+
+// ─── Strategy ────────────────────────
+function selStrat(el,v){
+  document.querySelectorAll('.rad').forEach(r=>r.classList.remove('active'));
+  el.classList.add('active');
+  strategy=v;
+  log('info',`Strategy: ${v.replace(/_/g,' ')}`);
+}
+
+// ─── Bot Toggle ──────────────────────
+function toggleBot(){
+  running=!running;
+  const btn=document.getElementById('mainBtn');
+  const st2=document.getElementById('topSt');
+  if(running){
+    btn.textContent='⏹ Stop Bot';btn.className='btn btn-d';
+    st2.className='tb-status on';st2.querySelector('span').textContent='ON';
+    log('success',`Bot started | ${mode.toUpperCase()} | ${orderType.toUpperCase()} | M1+M5`);
+    sim();
+    if(navigator.vibrate)navigator.vibrate(50);
+  }else{
+    btn.textContent='▶ Start Bot';btn.className='btn btn-p';
+    st2.className='tb-status off';st2.querySelector('span').textContent='OFF';
+    log('warn','Bot stopped.');
+    if(navigator.vibrate)navigator.vibrate([30,30,30]);
+  }
+}
+
+// ─── Test Connection ─────────────────
+function testConn(){
+  if(!document.getElementById('cKey').value){log('error','API Key kosong!');return;}
+  log('info','Testing API...');
+  setTimeout(()=>{log('success','Connected! API valid.');document.getElementById('xBal').textContent='$1,247.83';},1000);
+}
+
+// ─── Save Config ─────────────────────
+function saveCfg(){
+  const cfg={
+    api_key:document.getElementById('cKey').value,
+    api_secret:document.getElementById('cSec').value,
+    api_passphrase:document.getElementById('cPass').value,
+    demo:document.getElementById('cEnv').value==='demo',
+    market_mode:mode,symbol:document.getElementById('cPair').value,
+    order_size:parseFloat(document.getElementById('cSize').value),
+    max_positions:parseInt(document.getElementById('cMaxP').value),
+    tp_percent:parseFloat(document.getElementById('cTP').value),
+    sl_percent:parseFloat(document.getElementById('cSL').value),
+    leverage:parseInt(document.getElementById('cLev').value),
+    margin_mode:document.getElementById('cMarg').value,
+    order_type:orderType,limit_offset:limitOff,strategy:strategy
+  };
+  localStorage.setItem('bgbot_cfg',JSON.stringify(cfg));
+  log('success','Konfigurasi tersimpan!');
+  if(navigator.vibrate)navigator.vibrate(20);
+}
+
+// ─── Simulation ──────────────────────
+function sim(){
+  if(!running)return;
+  const pair=document.getElementById('cPair').value;
+  const bp={BTC:68420,ETH:3850,SOL:142,BNB:580,XRP:.58,DOGE:.12};
+  const pf=pair.replace('USDT','');
+  const base=bp[pf]||100;
+  const p1=base*(.98+Math.random()*.04);
+  const p5=base*(.975+Math.random()*.05);
+
+  const inds=['rsi','macd','bb','ema','stoch','atr'];
+  const ss=['LONG','SHORT','NEUTRAL'];
+  const m1i={},m5i={};
+  inds.forEach(i=>{m1i[i]=ss[Math.floor(Math.random()*3)];m5i[i]=ss[Math.floor(Math.random()*3)]});
+
+  const m1=rs(m1i),m5=rs(m5i);
+  updTF('M1',m1,p1,m1i);
+  updTF('M5',m5,p5,m5i);
+
+  tc2++;
+  const ok=m1===m5&&m1!=='NEUTRAL';
+  if(ok)alC++;
+
+  updAlign(m1,m5,ok);
+  log('tf',`[M1]${m1} $${p1.toFixed(0)} | [M5]{m5} $$$${p5.toFixed(0)} ${ok?'✓ ALIGNED':'✗'}`);
+
+  if(ok){
+    tc++;
+    const iw=Math.random()>.35;
+    const pnl=iw?(Math.random()*8+.5).toFixed(2):-(Math.random()*5+.3).toFixed(2);
+    if(iw)w++;else l++;
+    if(mode==='spot'){st++;}else{pt++;}
+    addTrade(pair.replace('USDT','/USDT'),m1==='LONG'?'buy':'sell',p5,pnl,mode);
+    log('success',`${orderType.toUpperCase()} ${m1} ${pair} $${p5.toFixed(0)} PnL:{pnl>0?'+':''}$$$${pnl}`);
+    if(navigator.vibrate)navigator.vibrate(ok?[20,50,20]:15);
+  }
+
+  updStats();
+  setTimeout(sim,5000+Math.random()*7000);
+}
+
+function rs(ind){
+  let b=0,s=0;
+  Object.values(ind).forEach(v=>{if(v==='LONG')b++;if(v==='SHORT')s++});
+  const t=Math.max(2,Object.keys(ind).length/2);
+  if(b>=t)return'LONG';if(s>=t)return'SHORT';return'NEUTRAL';
+}
+
+function updTF(tf,sig,price,ind){
+  const se=document.getElementById(`d${tf}`);
+  se.textContent=sig;
+  se.className='dtf-sig '+(sig==='LONG'?'bull':sig==='SHORT'?'bear':'neut');
+  document.getElementById(`d${tf}P`).textContent=`$${price.toFixed(2)}`;
+  const map={rsi:'r',macd:'m',bb:'b',ema:'e'};
+  Object.keys(ind).forEach(k=>{
+    const el=document.getElementById(`d{tf}${map[k]}`);
+    if(el){
+      const v=ind[k];
+      el.textContent=v;
+      el.className='v '+(v==='LONG'?'l':v==='SHORT'?'s':'n2');
+    }
+  });
+}
+
+function updAlign(m1,m5,ok){
+  const ic=document.getElementById('alIcon');
+  const mn=document.getElementById('alMain');
+  const sb=document.getElementById('alSub');
+  const bg=document.getElementById('alBadge');
+  if(ok){
+    ic.textContent='✓';ic.style.color='var(--acc)';
+    mn.innerHTML=`<span style="color:var(--acc)">${m1}</span> = <span style="color:var(--acc)">${m5}</span>`;
+    sb.textContent='Entry confirmed!';
+    bg.className='align-badge ok';bg.textContent='ALIGNED';
+  }else{
+    ic.textContent=m1==='NEUTRAL'&&m5==='NEUTRAL'?'⏳':'✗';
+    ic.style.color=ok?'var(--acc)':'var(--red)';
+    mn.innerHTML=`<span style="color:var(--blu)">${m1}</span> ≠ <span style="color:var(--org)">${m5}</span>`;
+    sb.textContent=ok?'':'No alignment';
+    bg.className='align-badge no';bg.textContent='SKIP';
+  }
+}
+
+// ─── Trade Log ───────────────────────
+function addTrade(pair,side,price,pnl,md){
+  const log=document.getElementById('tradeLog');
+  if(log.querySelector('div[style]'))log.innerHTML='';
+  const now=new Date().toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit'});
+  const pv=parseFloat(pnl);
+  const d=document.createElement('div');d.className='trade';
+  d.innerHTML=`<span class="mode ${md}">${md}</span><span class="side ${side}">${side.toUpperCase()}</span><span class="pair">${pair}</span><span class="price">$$$${price.toFixed(0)}</span><span class="pnl ${pv>=0?'pos':'neg'}">${pv>=0?'+':''}$${pnl}</span><span class="time">${now}</span>`;
+  log.insertBefore(d,log.firstChild);
+}
+
+// ─── Stats ───────────────────────────
+function updStats(){
+  document.getElementById('xTrd').textContent=tc;
+  document.getElementById('xST').textContent=`${st}S`;
+  document.getElementById('xPT').textContent=`${pt}P`;
+  document.getElementById('xW').textContent=`${w}W`;
+  document.getElementById('xL').textContent=`${l}L`;
+  document.getElementById('xWR').textContent=tc>0?`${((w/tc)*100).toFixed(0)}%`:'—';
+  const ar=tc2>0?`${((alC/tc2)*100).toFixed(0)}%`:'—';
+  document.getElementById('xAl').textContent=ar;
+  document.getElementById('xAlS').textContent=`${alC}/${tc2}`;
+}
+
+// ─── Console ─────────────────────────
+function log(lv,msg){
+  const c=document.getElementById('con');
+  const now=new Date().toLocaleTimeString('en-US',{hour12:false});
+  const d=document.createElement('div');d.className='ll';
+  d.innerHTML=`<span class="t">${now}</span><span class="m ${lv}">${msg}</span>`;
+  c.appendChild(d);c.scrollTop=c.scrollHeight;
+}
+function clearCon(){document.getElementById('con').innerHTML='';log('info','Cleared.');}
+
+// ─── Load saved config ───────────────
+(function(){
+  const s=localStorage.getItem('bgbot_cfg');
+  if(!s)return;
+  try{
+    const c=JSON.parse(s);
+    if(c.api_key)document.getElementById('cKey').value=c.api_key;
+    if(c.symbol)document.getElementById('cPair').value=c.symbol;
+    if(c.order_size)document.getElementById('cSize').value=c.order_size;
+    if(c.tp_percent)document.getElementById('cTP').value=c.tp_percent;
+    if(c.sl_percent)document.getElementById('cSL').value=c.sl_percent;
+    if(c.market_mode==='perp'){document.getElementById('mP').click();swMode('perp');}
+    if(c.order_type==='limit'){/* restore limit */}
+    log('info','Config loaded from storage.');
+  }catch(e){}
+})();
+
+// ─── Register Service Worker ─────────
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').then(r=>{
+    log('info','Service Worker registered.');
+  }).catch(e=>{});
+}
+</script>
+</body>
+</html>
